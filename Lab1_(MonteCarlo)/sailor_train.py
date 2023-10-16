@@ -21,37 +21,33 @@ maps = ['map_small.txt', 'map_easy.txt', 'map_big.txt', 'map_spiral.txt']
 ### MONTE CARLO ITERACJA STRATEGII
 
 def monte_carlo_iteracja_strategii(reward_map, Q):
-    actions = np.arange(1, 5, 1) 
-    state_X = np.arange(0, num_of_rows, 1) 
-    state_Y = np.arange(0, num_of_columns, 1) 
-    meshgrid_result = np.array(np.meshgrid(state_X, state_Y, actions)).T
-    init_set = meshgrid_result.reshape(-1, 3)
-    
     for _ in range(number_of_iterations):
-        for state_init_X, state_init_Y, init_action in init_set:
-            state = np.zeros([2], dtype=int)
-            sum_of_rewards = np.zeros([number_of_episodes], dtype=float)    
-            for episode in range(number_of_episodes):
-                state[0] = state_init_X
-                state[1] = state_init_Y
-                the_end = False
-                nr_pos = 0
-                gamma_temp = gamma
-                while not the_end:
-                    nr_pos = nr_pos + 1
-                    if nr_pos == 1:
-                        action = init_action 
-                    else:
-                        action = 1 + np.argmax(Q[state[0], state[1], :])
+        for state_init_X in range(num_of_rows):
+            for state_init_Y in range(num_of_columns):
+                for init_action in range(1, 5):
+                    state = np.zeros([2], dtype=int)
+                    sum_of_rewards = np.zeros([number_of_episodes], dtype=float)    
+                    for episode in range(number_of_episodes):
+                        state[0] = state_init_X
+                        state[1] = state_init_Y
+                        the_end = False
+                        nr_pos = 0
+                        gamma_temp = gamma
+                        while not the_end:
+                            nr_pos = nr_pos + 1
+                            if nr_pos == 1:
+                                action = init_action 
+                            else:
+                                action = 1 + np.argmax(Q[state[0], state[1], :])
 
-                    state, reward = sf.environment(state, action, reward_map)
+                            state, reward = sf.environment(state, action, reward_map)
 
-                    if (nr_pos == num_of_steps_max) or (state[1] >= num_of_columns-1):
-                        the_end = True
+                            if (nr_pos == num_of_steps_max) or (state[1] >= num_of_columns-1):
+                                the_end = True
 
-                    sum_of_rewards[episode] =  sum_of_rewards[episode] + (gamma_temp * reward)
-                    gamma_temp = gamma_temp * gamma
-            Q[state_init_X, state_init_Y, init_action - 1] += (np.sum(sum_of_rewards)/number_of_episodes)    
+                            sum_of_rewards[episode] =  sum_of_rewards[episode] + (gamma_temp * reward)
+                            gamma_temp = gamma_temp * gamma
+                    Q[state_init_X, state_init_Y, init_action - 1] += (np.sum(sum_of_rewards)/number_of_episodes)    
 
     return Q
 
@@ -59,38 +55,35 @@ def monte_carlo_iteracja_strategii(reward_map, Q):
 ### MONTE CARLO ITERACJA WARTOŚCI
     
 def monte_carlo_iteracja_wartości(reward_map, Q):
-    actions = np.arange(1, 5, 1) 
-    state_X = np.arange(0, num_of_rows, 1) 
-    state_Y = np.arange(0, num_of_columns, 1) 
-    meshgrid_result = np.array(np.meshgrid(state_X, state_Y, actions)).T
-    init_set = meshgrid_result.reshape(-1, 3)
-
     for _ in range(number_of_iterations):
         alpha_counter = 0
-        for state_init_X, state_init_Y, init_action in init_set:
-            alpha_counter += 1
-            state = np.zeros([2],dtype=int)      
-            state[0] = state_init_X
-            state[1] = state_init_Y
-            the_end = False
-            nr_pos = 0
-            alpha_n = 1/(alpha_counter)
-            sum_of_rewards = 0
-            while the_end == False:
-                nr_pos = nr_pos + 1         
-                if nr_pos == 1:
-                    action = init_action
-                else: 
-                    action = 1 + np.argmax(Q[state[0],state[1], :])
-                state_next, reward  = sf.environment(state, action, reward_map)
+        for state_init_X in range(num_of_rows):
+            for state_init_Y in range(num_of_columns):
+                for init_action in range(1, 5):
 
-                sum_of_rewards += np.power(gamma,nr_pos-1)*reward                
-                state = state_next      
-            
-                if (nr_pos == num_of_steps_max) or (state[1] >= num_of_columns-1):
-                    the_end = True
+                    alpha_counter += 1
+                    state = np.zeros([2],dtype=int)      
+                    state[0] = state_init_X
+                    state[1] = state_init_Y
+                    the_end = False
+                    nr_pos = 0
+                    alpha_n = 1/(alpha_counter)
+                    sum_of_rewards = 0
+                    while the_end == False:
+                        nr_pos = nr_pos + 1         
+                        if nr_pos == 1:
+                            action = init_action
+                        else: 
+                            action = 1 + np.argmax(Q[state[0],state[1], :])
+                        state_next, reward  = sf.environment(state, action, reward_map)
 
-            Q[state_init_X, state_init_Y, init_action-1] = (1 - alpha_n) * Q[state_init_X, state_init_Y, init_action-1] + (alpha_n * sum_of_rewards)
+                        sum_of_rewards += np.power(gamma,nr_pos-1)*reward                
+                        state = state_next      
+                    
+                        if (nr_pos == num_of_steps_max) or (state[1] >= num_of_columns-1):
+                            the_end = True
+
+                    Q[state_init_X, state_init_Y, init_action-1] = (1 - alpha_n) * Q[state_init_X, state_init_Y, init_action-1] + (alpha_n * sum_of_rewards)
                                 
     return Q
 
@@ -105,9 +98,10 @@ for method in range(2):
         Q = np.zeros([num_of_rows, num_of_columns, 4], dtype=float) 
 
         if method == 0:
-            monte_carlo_iteracja_wartości(reward_map, Q)
-        else:
             monte_carlo_iteracja_strategii(reward_map, Q)
+        else:
+            monte_carlo_iteracja_wartości(reward_map, Q)
+            
 
         sf.sailor_test(reward_map,Q,1000)
         sf.draw(reward_map,Q)
